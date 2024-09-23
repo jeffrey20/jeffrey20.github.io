@@ -1,93 +1,162 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>视频解析界面</title>
-     <style>
+    <title>视频信息解析器</title>
+    <style>
+        /* 样式部分可以根据需要进行调整 */
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            margin-top: 80px;
+            background-image: url('1.jpg'); /* 替换为您的图片URL */
+            background-size: cover; /* 使背景图片覆盖整个容器 */
+            
+            background-repeat: no-repeat; /* 不重复背景图片 */
         }
+
         .container {
-            text-align: center;
+            max-width: 600px;
+            margin: auto;
             padding: 20px;
-            background-color: white;
+            border: 1px solid #ccc;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            /* 设置背景图片 */
+            background-image: url('2.jpg'); /* 替换为您的图片URL */
+            background-size: cover; /* 使背景图片覆盖整个容器 */
+            background-position: center; /* 将背景图片居中显示 */
+            background-repeat: no-repeat; /* 不重复背景图片 */
         }
-        input[type="text"] {
-            margin: 10px 0;
+
+        h1 {
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group input {
+            width: calc(100% - 22px);
             padding: 10px;
-            width: 300px;
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-        button {
-            padding: 10px 20px;
+
+        .form-group button {
+            width: 100%;
+            padding: 10px;
             background-color: #007bff;
-            color: white;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .form-group button:hover {
+            background-color: #0056b3;
+        }
+
+        .result {
+            margin-top: 20px;
+        }
+
+        .result-link {
+            margin-bottom: 10px;
+        }
+
+        .result-link p {
+            margin: 0;
+        }
+
+        .custom-button {
+            display: inline-block;
+            padding: 6px 12px;
+            font-size: 14px;
+            color: #fff;
+            background-color: #28a745;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            outline: none;
+            transition: background-color 0.3s;
         }
-        button:hover {
-            background-color: #0056b3;
+
+        .custom-button:hover {
+            background-color: #218838;
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h1>视频信息解析器</h1>
+        <div class="form-group">
+            <input type="text" id="videoInput" placeholder="请输入视频URL...">
+            <button onclick="parseVideoInfo()">解析视频</button>
+        </div>
+        <div class="result" id="result"></div>
+    </div>
 
-<div class="container">
-    <input type="text" id="videoUrlInput" placeholder="请输入视频URL">
-    <button onclick="parseVideo()">解析</button>
-    <div id="result"></div>
-</div>
-
-<script>
-function parseVideo() {
-    var videoUrl = document.getElementById('videoUrlInput').value;
-    if (!videoUrl) {
-        alert('请输入视频URL！');
-        return;
-    }
-
-    var apiUrl = 'https://apis.nfiii.com/?url=' + encodeURIComponent(videoUrl);
-
-    fetch(apiUrl, {
-        method: 'GET', // 明确指定使用GET方法
-        headers: {
-            // 如果需要额外的HTTP头，可以在这里添加，比如'Content-Type': 'application/json'，但GET请求通常不需要
+    <script>
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('已复制到剪贴板');
         }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('网络响应错误: ' + response.statusText);
+
+        function parseVideoInfo() {
+            const videoUrl = document.getElementById('videoInput').value;
+            if (!videoUrl) {
+                alert('请输入视频URL！');
+                return;
+            }
+
+            // 构建请求URL
+            const apiUrl = `https://api.kxzjoker.cn/API/jiexi_video.php?url=${encodeURIComponent(videoUrl)}`;
+
+            // 发送GET请求
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应错误');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        displayVideoInfo(data.data);
+                    } else {
+                        alert('解析视频信息失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('请求失败:', error);
+                    alert('请求失败，请稍后重试');
+                });
         }
-        return response.json();
-    })
-    .then(data => {
-        if (data.code === 200) {
-            var resultHtml = `
-                <h3>解析结果</h3>
-                <p><strong>标题:</strong> ${data.data.title}</p>
-                <p><strong>封面:</strong> <img src="${data.data.cover}" alt="视频封面" style="max-width: 200px;"></p>
-                <p><strong>视频地址:</strong> <a href="${data.data.url}" target="_blank">点击播放</a></p>
+
+        function displayVideoInfo(videoData) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <div class="result-link">
+                    <p><strong>视频名称：</strong> ${videoData.video_title}</p>
+                    <p><strong>视频地址：</strong> <a href="${videoData.video_url}" target="_blank">在线观看</a> | 
+                        <button class="custom-button" onclick="copyToClipboard('${videoData.video_url}')">点击复制</button></p>
+                    <p><strong>下载地址：</strong> <a href="${videoData.download_url}" download>点击下载</a></p>
+                    <p><strong>图片地址：</strong> <img src="${videoData.image_url}" alt="视频封面" style="width: 100px; height: auto;"></p>
+                        <button class="custom-button" onclick="copyToClipboard('${videoData.image_url}')"><h2>点击复制图片地址</h2></button></p>
+                </div>
             `;
-            document.getElementById('result').innerHTML = resultHtml;
-        } else {
-            document.getElementById('result').innerHTML = `<p>错误: ${data.msg}</p>`;
         }
-    })
-    .catch(error => {
-        document.getElementById('result').innerHTML = `<p>请求出错: ${error.message}</p>`;
-    });
-}
-</script>
-
+    </script>
 </body>
 </html>
